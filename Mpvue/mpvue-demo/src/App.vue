@@ -4,17 +4,6 @@
 export default {
   async created () {
     console.log('小程序进入')
-    // const res = await get('/weapp/demo')
-    // console.log(123, res)
-    // qcloud.setLoginUrl(config.loginUrl)
-    // qcloud.login({
-    //   success: function (userInfo) {
-    //     console.log('登陆成功', userInfo)
-    //   },
-    //   fail: function (err) {
-    //     console.log('登陆失败', err)
-    //   }
-    // })
   }
 }
 </script>

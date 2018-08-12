@@ -1,82 +1,97 @@
 <template>
     <div class="container">
+        <button class="btnLogin" open-type="getUserInfo" lang="zh_CN" @getuserinfo="doLogin" >
         <div class="userinfo">
             <img :src="userinfo.avatarUrl" alt="">
             <p>{{userinfo.nickName}}</p>
         </div>
+        </button>
         <YearProgress></YearProgress>
-        <button class="btn" @click="scanBook">添加图书</button>
-        <button class="btnLogin btn" open-type="getUserInfo" lang="zh_CN" @getuserinfo="doLogin" v-if="!authorization">获取用户信息</button>
+        <button class="btn" @click="scanBook" v-if="logged">添加图书</button>
     </div>
 </template>
 <script>
-import qcloud from 'wafer2-client-sdk'
-import config from '../../config'
+import config from '@/config'
 import YearProgress from '@/components/YearProgress'
+import utils, {post, showSuccess} from '@/utils'
 export default {
   components: {
     YearProgress
   },
   data () {
     return {
-      userinfo: {},
-      authorization: false
+      userinfo: {
+        avatarUrl: '../../static/img/unlogin.png',
+        nickName: '点击登陆'
+      },
+      logged: false
     }
   },
-  created () {
-    this.userinfo = wx.getStorageSync('userinfo') && (wx.getStorageSync('userinfo').userinfo || {})
-    console.log(this.userinfo)
-    if (!this.userinfo) {
-      this.authorization = false
-    } else {
-      this.authorization = true
+  onLoad () {
+    let storage = wx.getStorageSync('userinfo') || {userinfo: this.userinfo, logged: this.logged}
+    this.userinfo = storage.userinfo
+    this.logged = storage.logged
+    if (this.logged) {
+      showSuccess('登陆成功')
     }
   },
   methods: {
-    doLogin () {
-      qcloud.setLoginUrl(config.loginUrl)
-      const session = qcloud.Session.get()
-
-      if (session) {
+    async doLogin () {
+      if (this.logged) {
+        console.log('已经登陆 无需再次登陆')
+        return
+      }
+      wx.showLoading('登陆中')
+      utils.qcloud.setLoginUrl(config.loginUrl)
+      const session = utils.qcloud.Session.get()
+      try {
+        if (session) {
         // 第二次登录
         // 或者本地已经有登录态
         // 可使用本函数更新登录态
-        qcloud.loginWithCode({
-          success: res => {
-            wx.setStorageSync('userinfo', { userinfo: res, logged: true })
-            this.authorization = true
-            this.userinfo = res
-            console.log('登陆成功')
-            // util.showSuccess('登录成功')
-          },
-          fail: err => {
-            console.error(err)
-            // util.showModel('登录错误', err.message)
+          try {
+            await utils.qcloud.loginWithCodeSync()
+          } catch (err) {
+            throw err
           }
-        })
-      } else {
+        } else {
         // 首次登录
-        qcloud.login({
-          success: res => {
-            wx.setStorageSync('userinfo', { userinfo: res, logged: true })
-            this.authorization = true
-            this.userinfo = res
-            console.log('首次成功')
-            // util.showSuccess('登录成功')
-          },
-          fail: err => {
-            console.error(err)
-            // util.showModel('登录错误', err.message)
+          try {
+            await utils.qcloud.loginSync()
+          } catch (err) {
+            throw err
           }
-        })
+        }
+        console.log('登陆成功')
+        let res = await utils.qcloud.requestSync(config.userUrl)
+        console.log('获取用户信息成功')
+        wx.hideLoading()
+        showSuccess('登陆成功')
+
+        wx.setStorageSync('userinfo', { userinfo: res.data.data, logged: true })
+        this.logged = true
+        this.userinfo = res.data.data
+      } catch (err) {
+        console.log(err)
+        wx.hideLoading()
+        showSuccess('登陆失败')
       }
     },
     scanBook () {
       wx.scanCode({
         success: (res) => {
-          console.log(res)
+          this.addBook(res.result)
         }
       })
+    },
+    async addBook (isbn) {
+      console.log(isbn)
+      wx.showLoading('添加中')
+      const res = await post('/weapp/addbook', {isbn, openId: this.userinfo.openId})
+      wx.hideLoading()
+      if (res.code === 0 && res.data.title) {
+        showSuccess('添加成功', res.data.title)
+      }
     }
   }
 }
@@ -85,6 +100,9 @@ export default {
 .container {
     padding:0 30rpx;
 }
+.btnLogin{
+    background: none !important;
+    color: #000 !important;
     .userinfo{
         margin-top:100rpx;
         text-align: center;
@@ -95,9 +113,10 @@ export default {
         border-radius: 50%;
         }
     }
-    .btnLogin{
-      width:200rpx;
-    }
+}
+.btnLogin::after{
+  border: none;
+}
 
 </style>
 
