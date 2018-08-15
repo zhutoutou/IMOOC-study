@@ -35,7 +35,16 @@ router.post('/message', controllers.message.post)
 
 // GET 测试用的接口
 router.get('/demo', controllers.demo)
-// POST 用来处理添加图书
+// POST 新增图书
 router.post('/addBook', controllers.addBook)
-
+// GET 获取图书列表
+router.get('/bookList', controllers.bookList)
+// GET 获取图书详情
+router.get('/bookDetail', controllers.bookDetail)
+// GET 获取推荐图书
+router.get('/top', controllers.top)
+// GET 获取评论列表
+router.get('/commentList', controllers.commentList)
+// POST 新增评论
+router.post('/addComment', controllers.addComment)
 module.exports = router

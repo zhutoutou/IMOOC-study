@@ -13,7 +13,7 @@
 <script>
 import config from '@/config'
 import YearProgress from '@/components/YearProgress'
-import utils, {post, showSuccess} from '@/utils'
+import utils, {post, showSuccess, showModal} from '@/utils'
 export default {
   components: {
     YearProgress
@@ -74,23 +74,37 @@ export default {
       } catch (err) {
         console.log(err)
         wx.hideLoading()
-        showSuccess('登陆失败')
+        showModal('失败', err)
       }
     },
     scanBook () {
       wx.scanCode({
         success: (res) => {
+          console.log(res)
           this.addBook(res.result)
+        },
+        fail: (err) => {
+          console.log(err)
         }
       })
     },
     async addBook (isbn) {
       console.log(isbn)
       wx.showLoading('添加中')
-      const res = await post('/weapp/addbook', {isbn, openId: this.userinfo.openId})
-      wx.hideLoading()
-      if (res.code === 0 && res.data.title) {
-        showSuccess('添加成功', res.data.title)
+      let msg = {
+        title: '',
+        content: ''
+      }
+      try {
+        const res = await post('/weapp/addbook', {isbn, openId: this.userinfo.openId})
+        console.log(res)
+        msg = {title: '成功', content: `添加${res.title}成功` || '无title异常'}
+      } catch (err) {
+        console.log(err)
+        msg = {title: '失败', content: err.data.msg || '无异常报错'}
+      } finally {
+        showModal(msg.title, msg.content)
+        wx.hideLoading()
       }
     }
   }

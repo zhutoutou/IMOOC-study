@@ -1,14 +1,26 @@
 const https = require('https')
-const {mysql} = require('./qcloud')
+const {mysql} = require('../qcloud')
 // 新增图书
 // 1. 获取豆瓣信息
 // 2. 入库
 // https://api.douban.com/v2/book/isbn/:name
 module.exports = async(ctx, next) => {
     const {isbn, openId} = ctx.request.body
+    console.log('添加图书', isbn, openId)
     if (isbn && openId) {
-        let url = 'https://api.douban.com/v2/book/isbn/' + isbn
         try {
+            const findRes = await mysql('cBook').select().where('isbn', isbn)
+            if (findRes.length) {
+                ctx.state = {
+                    code: -1,
+                    data: {
+                        msg: '图书已存在'
+                    }
+                }
+                return
+            }
+            let url = 'https://api.douban.com/v2/book/isbn/' + isbn
+
             const bookinfo = await getJSON(url)
             const rate = bookinfo.rating.average
             const {title, image, alt, publisher, summary, price} = bookinfo
@@ -29,6 +41,7 @@ module.exports = async(ctx, next) => {
                 throw err
             }
         } catch (err) {
+            console.log(err)
             ctx.state = {
                 code: -1,
                 data: {

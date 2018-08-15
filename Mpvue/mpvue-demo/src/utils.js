@@ -41,4 +41,55 @@ export function showModal (title, content) {
     showCancel: false
   })
 }
+
+// #region qcloud拓展
+/**
+ * 腾讯服务器登陆
+ */
+qcloud.loginSync = function () {
+  return new Promise((resolve, reject) => {
+    qcloud.login({
+      success: res => {
+        resolve(res)
+      },
+      fail: err => {
+        reject(err)
+      }
+    })
+  })
+}
+/**
+ * 腾讯服务器免验证登陆
+ */
+qcloud.loginWithCodeSync = function () {
+  return new Promise((resolve, reject) => {
+    qcloud.loginWithCode({
+      success: res => {
+        resolve(res)
+      },
+      fail: err => {
+        reject(err)
+      }
+    })
+  })
+}
+/**
+ * 腾讯服务获取openId
+ * @param {请求地址} url
+ */
+qcloud.requestSync = function (url) {
+  return new Promise((resolve, reject) => {
+    qcloud.request({
+      url: url,
+      success: res => {
+        resolve(res)
+      },
+      fail: err => {
+        reject(err)
+      }
+    })
+  })
+}
+// #endregion
+
 export default {qcloud}

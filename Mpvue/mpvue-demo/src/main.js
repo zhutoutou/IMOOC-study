@@ -8,12 +8,12 @@ app.$mount()
 
 export default{
   config: {
-    pages: ['^pages/me/main'],
+    pages: ['^pages/books/main'],
     'window': {
       'backgroundTextStyle': 'light',
       'navigationBarBackgroundColor': '#EA5149',
       'navigationBarTitleText': '蜗牛图书',
-      'navigationBarTextStyle': 'black'
+      'navigationBarTextStyle': 'white'
     },
     tabBar: {
       selectedColor: '#EA5149',

@@ -24,5 +24,22 @@ export default {
     color:#EA5A49;
     background-color: white;
   }
+  .text-primary{
+    color:#EA5A49;
+  }
+  .text-footer{
+    text-align: center;
+    font-size:12px;
+    margin-bottom: 5px;
+  }
+  .right{
+    float: right;
+  }
+  .page-title{
+    padding-left: 20px;
+    background-color: #eee;
+    font-size: 14px;
+    line-height: 40px;
+  }
 </style>
 
