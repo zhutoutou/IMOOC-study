@@ -8,6 +8,7 @@
         </button>
         <YearProgress></YearProgress>
         <button class="btn" @click="scanBook" v-if="logged">添加图书</button>
+        <button class="btn" open-type="contact">联系客服</button>
     </div>
 </template>
 <script>

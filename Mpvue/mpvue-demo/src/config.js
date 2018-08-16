@@ -1,5 +1,5 @@
 // 配置项
-const host = 'http://localhost:5757'
+const host = 'http://zhu.forfuture.club'
 
 const config = {
   host,

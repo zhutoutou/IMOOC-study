@@ -18,9 +18,10 @@ async function post (ctx, next) {
      * 解析微信发送过来的请求体
      * 可查看微信文档：https://mp.weixin.qq.com/debug/wxadoc/dev/api/custommsg/receive.html#接收消息和事件
      */
-    const body = ctx.request.body
-
-    ctx.body = 'success'
+    console.log(ctx.request.body)
+    const { ToUserName, FromUserName, CreateTime } = ctx.request.body
+    let response = `<xml><ToUserName><![CDATA[${FromUserName}]]></ToUserName><FromUserName><![CDATA[${ToUserName}]]></FromUserName><CreateTime>${CreateTime}</CreateTime><MsgType><![CDATA[transfer_customer_service]]></MsgType></xml>`
+    ctx.body = response
 }
 
 module.exports = {
