@@ -1,9 +1,10 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Support from '@/components/Support'
+import ChooseStar from '@/components/ChooseStar'
 import NotFound from '@/components/NotFound'
 import OAUTH from '@/components/OAUTH2'
-import { getToken, setToken, setToUrl, getToUrl, setUserInfo } from '@/libs/util'
+import { getToken, setToken, setToUrl, getToUrl, setUserInfo, getUserInfo } from '@/libs/util'
 import wxmp from '../api/wxmp'
 import wechat from '@/libs/wechat'
 
@@ -17,6 +18,13 @@ const router = new Router({
       path: '/Support',
       name: 'Support',
       component: Support,
+      meta: {
+        title: '充值打榜'
+      }
+    }, {
+      path: '/ChooseStar',
+      name: 'ChooseStar',
+      component: ChooseStar,
       meta: {
         title: '充值打榜'
       }
@@ -41,8 +49,11 @@ const OAUTH2 = 'oauth2'
 
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title
-  const token = getToken()
-  console.log(to.name, token)
+  let token, userinfo
+  token = getToken()
+  userinfo = getUserInfo()
+  if (!(userinfo && userinfo.openid)) token = undefined
+
   if (!token && to.name !== OAUTH2) { // 尚未授权
     setToUrl(to.name)
     // api接口请求微信授权地址

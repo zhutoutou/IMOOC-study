@@ -15,6 +15,10 @@ export default {
     return fetch.get('/miniopenid', params)
   },
 
+  findstar (params) {
+    return fetch.get('/findstar', params)
+  },
+
   // 关联明星列表
   starlist (params) {
     return fetch.get('/starlist', params)

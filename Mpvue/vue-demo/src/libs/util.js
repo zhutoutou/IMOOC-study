@@ -20,8 +20,13 @@ export const setUserInfo = (userinfo) => {
 
 export const getUserInfo = () => {
   const userinfo = localStorage.getItem(USER_INFO_KET)
-  if (userinfo) return JSON.parse(userinfo)
-  else return false
+  if (userinfo) {
+    try {
+      return JSON.parse(userinfo)
+    } catch (e) {
+      return false
+    }
+  } else return false
 }
 
 export const setToUrl = (toUrl) => {

@@ -5,19 +5,22 @@
       <img class="user-headimg"  :src="userinfo.headimgurl" alt="">
       <div class="user-nickname">{{userinfo.nickname}}</div>
     </div>
-    <h3>为TA冲榜</h3>
-    <div class="star" @click="chooseStar">
-      <Star :starinfo="currentStar" class="star-info"></Star>
-      <div class="star-choose">选择爱豆></div>
-    </div>
-    <div class="pay-container">
-      <div class="pay-item" v-for="(item,i) in payItems"
-      :key="i" @click="checkOne(item.id)">
-        <div>{{item.money}}元  (+{{item.hotValue}}热度)</div>
-        <img :src="checkedImg(item.id)">
+    <div class="support-panel" v-if="hasStar">
+      <h3>为TA冲榜</h3>
+      <div class="star" @click="chooseStar" >
+        <Star :starinfo="currentStar" class="star-info"></Star>
+        <div class="star-choose">选择爱豆></div>
       </div>
+      <div class="pay-container">
+        <div class="pay-item" v-for="(item,i) in payItems"
+        :key="i" @click="checkOne(item.id)">
+          <div>{{item.money}}元  (+{{item.hotValue}}热度)</div>
+          <img :src="checkedImg(item.id)">
+        </div>
+      </div>
+      <button class="btn subpay" @click="Pay">用爱发电</button>
     </div>
-    <button class="btn subpay" @click="Pay">用爱发电</button>
+    <h2 v-else>先去明星风云榜小程序，关注自己的爱豆吧</h2>
   </div>
 </template>
 
@@ -31,8 +34,10 @@ export default {
   components: {Star},
   data () {
     return {
+      hasStar: true,
       currentId: 2,
       userinfo: {},
+      stars: [],
       currentStar: {},
       payItems: [{
         id: 0,
@@ -76,19 +81,22 @@ export default {
       try {
         if (this.userinfo) {
           const {openid, unionid, miniopenid} = this.userinfo
-          const starid = this.userinfo.stars[0].id
-          console.log(`用户openid：${openid},unionid:${unionid}发起支付`)
+          const starid = this.currentStar.id
+          const payitem = this.payItems.find(v => v.id === this.currentId)
           // eslint-disable-next-line
-          const total_fee = 1
+          const total_fee = payitem.money * 100
           const body = JSON.stringify({msg: '测试', openid, unionid})
           const res = await wechat.chooseWXPayAsync(total_fee, body, openid, unionid)
           if (res && res.errMsg === 'chooseWXPay:ok') {
             const paymininotifyRes = await wxmp.paymininotify({
               openid: miniopenid,
               starid: starid,
-              count: 1
+              count: payitem.hotValue
             })
             if (paymininotifyRes.code === -1) throw new Error(`paymininotify请求异常,Err:${paymininotifyRes.data.msg}`)
+            else {
+              await this.getStarInfo()
+            }
           }
         }
       } catch (err) {
@@ -96,7 +104,7 @@ export default {
       }
     },
     chooseStar () {
-
+      this.$router.push({name: 'ChooseStar', params: {stars: this.stars}})
     },
     async getMiniOpenid () {
       let userinfo = getUserInfo()
@@ -107,9 +115,9 @@ export default {
             if (miniopenidRes.code === -1) throw new Error(`miniopenid请求异常,Err:${miniopenidRes.data.msg}`)
             const {miniopenid} = miniopenidRes.data
             userinfo.miniopenid = miniopenid
-            this.userinfo = userinfo
             setUserInfo(userinfo)
           }
+          this.userinfo = userinfo
         } else {
           throw new Error('没有获取到userinfo')
         }
@@ -123,15 +131,14 @@ export default {
           const starlistRes = await wxmp.starlist({openid: this.userinfo.miniopenid})
           if (starlistRes.code === -1) throw new Error(`starlist请求异常,Err:${starlistRes.data.msg}`)
           const {stars} = starlistRes.data
-          console.log('stars', stars)
-          this.userinfo.stars = stars
-          if (!this.currentStar) {
-            this.currentStar = stars[0]
+          this.stars = stars
+          if (this.currentStar && this.currentStar.id) {
+            this.currentStar = stars.find(v => v.id === this.currentStar.id) || this.currentStar
           } else {
-            this.currentStar = stars.find(v => v.id === this.currentStar.id)
+            this.currentStar = stars[0]
           }
         } else {
-          throw new Error('没有获取到userinfo')
+          throw new Error('没有获取到miniopenid')
         }
       } catch (err) {
         console.log(err.message)
@@ -139,8 +146,11 @@ export default {
     }
   },
   async mounted () {
+    const starinfo = this.$route.params && this.$route.params.starinfo
+    if (starinfo) this.currentStar = starinfo
     await this.getMiniOpenid()
     await this.getStarInfo()
+    this.hasStar = this.userinfo && this.userinfo.miniopenid && this.stars && this.stars.length > 0
   }
 }
 </script>
@@ -148,6 +158,7 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
 .support-container{
+  overflow: hidden;
   margin:0 10px;
   .user{
     height: 40px;
@@ -165,47 +176,52 @@ export default {
       font-size: 20px;
     }
   }
-  .star{
-    height: 60px;
+  .support-panel{
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    .stra-info{
-
-    }
-    .star-choose{
-      margin-left: auto;
-      margin-right: 10px;
-      color: rgb(195,195,195);
-      font-size:16px;
-    }
-  }
-  .pay-container{
-    width:100%;
-    display: flex;
-    flex-direction: column;
-    .pay-item{
+    flex-direction: columns;;
+    .star{
+      height: 60px;
       display: flex;
       flex-direction: row;
-      height:45px;
-      line-height: 45px;
-      border-bottom: 1px rgb(195,195,195) solid;
-      font-size: 14px;
-      font-weight: bold;
       align-items: center;
-      img{
-        width:20px;
-        height: 20px;
+      border-bottom: 1px solid rgb(195,195,195);
+      .star-choose{
         margin-left: auto;
-        margin-right: 5px;
+        margin-right: 0px;
+        color: rgb(195,195,195);
+        font-size:16px;
       }
     }
-    .pay-item:active{
-      background-color: rgb(195,195,195)
+    .pay-container{
+      width:100%;
+      display: flex;
+      flex-direction: column;
+      .pay-item{
+        display: flex;
+        flex-direction: row;
+        height:45px;
+        line-height: 45px;
+        border-bottom: 1px rgb(195,195,195) solid;
+        font-size: 14px;
+        font-weight: bold;
+        align-items: center;
+        img{
+          width:20px;
+          height: 20px;
+          margin-left: auto;
+          margin-right: 5px;
+        }
+      }
+      .pay-item:last-child{
+        border:none
+      }
+      .pay-item:active{
+        background-color: rgb(195,195,195)
+      }
     }
-  }
-  .subpay{
-    margin-top:20px;
+    .subpay{
+      margin-top:40px;
+    }
   }
 }
 

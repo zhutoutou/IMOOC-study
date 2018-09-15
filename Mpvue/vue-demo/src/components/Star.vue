@@ -3,19 +3,33 @@
         <img :src="starinfo.userimg" class="star-headimg">
         <div class="star-info">
             <div class="star-name">{{starinfo.name}}</div>
-            <div class="star-detail">排名：No.{{starinfo.sort}} | 人气值：{{starinfo.hot}}</div>
+            <div class="star-detail animated" :class="{fadeInUp:detailChanged}">排名：No.{{starinfo.sort}} | 人气值：{{starinfo.hot}}</div>
         </div>
     </div>
 </template>
 <script>
 export default {
   props: {
-    starinfo: {type: [Object], defualt: {}}
+    starinfo: {type: [Object], default: () => []}
+  },
+  data () {
+    return {
+      detailChanged: false
+    }
+  },
+  watch: {
+    starinfo: function (newStarInfo, oldStarInfo) {
+      this.detailChanged = false
+      setTimeout(() => {
+        this.detailChanged = true
+      }, 0)
+    }
   }
 }
 </script>
 <style lang="scss" scoped>
 .star-container{
+    overflow: hidden;
     display: flex;
     flex-direction: row;
     height: 40px;
