@@ -18,7 +18,7 @@
           <img :src="checkedImg(item.id)">
         </div>
       </div>
-      <button class="btn subpay" @click="Pay">用爱发电</button>
+      <button class="btn subpay" @click="Pay">{{ChargeText}}</button>
     </div>
     <h2 v-else>先去明星风云榜小程序，关注自己的爱豆吧</h2>
   </div>
@@ -34,6 +34,7 @@ export default {
   components: {Star},
   data () {
     return {
+      hasCharge: false,
       hasStar: true,
       currentId: 2,
       userinfo: {},
@@ -71,6 +72,9 @@ export default {
       return function (id) {
         return (id === this.currentId) ? config.checkedImg : config.uncheckedImg
       }
+    },
+    ChargeText () {
+      return this.hasCharge ? '用爱发电' : '用爱发电(首冲送30热度)'
     }
   },
   methods: {
@@ -85,16 +89,18 @@ export default {
           const payitem = this.payItems.find(v => v.id === this.currentId)
           // eslint-disable-next-line
           const total_fee = payitem.money * 100
-          const body = JSON.stringify({msg: '测试', openid, unionid})
+          const count = this.hasCharge ? payitem.hotValue : payitem.hotValue + 30
+          const body = `${count}热度`
           const res = await wechat.chooseWXPayAsync(total_fee, body, openid, unionid)
           if (res && res.errMsg === 'chooseWXPay:ok') {
             const paymininotifyRes = await wxmp.paymininotify({
               openid: miniopenid,
               starid: starid,
-              count: payitem.hotValue
+              count: count
             })
             if (paymininotifyRes.code === -1) throw new Error(`paymininotify请求异常,Err:${paymininotifyRes.data.msg}`)
             else {
+              this.hasCharge = true
               await this.getStarInfo()
             }
           }
@@ -143,6 +149,20 @@ export default {
       } catch (err) {
         console.log(err.message)
       }
+    },
+    async GethasCharge () {
+      try {
+        if (this.userinfo && this.userinfo.unionid) {
+          const haschargeRes = await wxmp.hascharge({unionId: this.userinfo.unionid})
+          if (haschargeRes.code === -1) throw new Error(`hascharge请求异常,Err:${haschargeRes.data.msg}`)
+          const hascharge = haschargeRes.data
+          this.hasCharge = hascharge
+        } else {
+          throw new Error('没有获取到unionid')
+        }
+      } catch (err) {
+        console.log(err.message)
+      }
     }
   },
   async mounted () {
@@ -150,6 +170,7 @@ export default {
     if (starinfo) this.currentStar = starinfo
     await this.getMiniOpenid()
     await this.getStarInfo()
+    await this.GethasCharge()
     this.hasStar = this.userinfo && this.userinfo.miniopenid && this.stars && this.stars.length > 0
   }
 }
@@ -178,7 +199,7 @@ export default {
   }
   .support-panel{
     display: flex;
-    flex-direction: columns;;
+    flex-direction: column;;
     .star{
       height: 60px;
       display: flex;

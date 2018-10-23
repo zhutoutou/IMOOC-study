@@ -38,9 +38,9 @@ export default {
     })
   },
   // eslint-disable-next-line
-  chooseWXPayAsync (total_fee, body , openid,unionid) {
+  chooseWXPayAsync (total_fee, body , openid,unionId) {
     return new Promise((resolve) => {
-      wxmp.wxpay({total_fee, body, origin: 'PLATFORM', openid, unionid}).then(res => {
+      wxmp.wxpay({total_fee, body, origin: 'PLATFORM', openid, unionId}).then(res => {
         // res = res.data
         if (res.code === -1) console.log(res.data.msg)
         Vue.wechat.chooseWXPay({

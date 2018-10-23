@@ -36,5 +36,10 @@ export default {
   // 统一下单
   wxpay (params) {
     return fetch.get('/unified', params)
+  },
+
+  // 是否首冲
+  hascharge (params) {
+    return fetch.post('/hascharge', params)
   }
 }
